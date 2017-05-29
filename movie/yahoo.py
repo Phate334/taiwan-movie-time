@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+""" parser for Yahoo movie website.
+"""
+
 import re
 
 import requests
@@ -61,17 +66,45 @@ def get_theater_time(theater_id):
     result = []
     for div in movie_div_list:
         movie = {}
+        movie["theater_id"] = theater_id
         movie["url"] = div.find("h4").a["href"].split('*')[1]
         movie["id"] = re.search(r'\d+', movie["url"]).group()
-        movie["title_tw"] = div.find("h4").text
+        movie["title"] = div.find("h4").text
         movie["mvtype"] = []
-        for img in div.find("span", class_="mvtype").find_all("img"):
-            movie["mvtype"].append(
-                re.search('icon_(.*).gif', img["src"]).group(1))
+        mvtype = div.find("span", class_="mvtype")
+        if mvtype:
+            for img in mvtype.find_all("img"):
+                movie["mvtype"].append(
+                    re.search('icon_(.*).gif', img["src"]).group(1))
         movie["time"] = []
         for span in div.find_all("span", class_="tmt"):
             movie["time"].append(span.text)
         result.append(movie)
+    return result
+
+def get_movie_time(movie_id):
+    """ time data on the movie page.
+    """
+    soup = get_soup(HOST + "/movietime_result.html?id=" + str(movie_id))
+    theater_div_list = soup.find_all("div", {"class":["row", "row_last"]})
+    result = []
+    for div in theater_div_list:
+        theater = {}
+        theater["movie_id"] = movie_id
+        title_elm = div.find("div", class_="img")
+        theater["url"] = title_elm.a["href"].split('*')[1]
+        theater["id"] = re.search(r'\d+', theater["url"]).group()
+        theater["title"] = title_elm.text
+        theater["mvtype"] = []
+        mvtype = div.find("span", class_="mvtype")
+        if mvtype:
+            for img in mvtype.find_all("img"):
+                theater["mvtype"].append(
+                    re.search('icon_(.*).gif', img["src"]).group(1))
+        theater["time"] = []
+        for span in div.find_all("span", class_="tmt"):
+            theater["time"].append(span.text)
+        result.append(theater)
     return result
 
 def get_soup(url):

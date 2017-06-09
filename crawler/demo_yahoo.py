@@ -2,6 +2,7 @@
 
 import os
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 from movie import yahoo
 
@@ -14,7 +15,8 @@ with open(os.path.join("output", "theater_meta.json"), "w", encoding="utf-8") as
 
 with open(os.path.join("output", "theater_time.json"), "w", encoding="utf-8")  as f:
     theater_time = []
-    for theater in theaters:
-        theater_time += yahoo.get_theater_time(theater["id"])
+    with ThreadPoolExecutor() as executor:
+        for t in executor.map(yahoo.get_theater_time, theaters):
+            theater_time += t
     f.write(json.dumps(theater_time, ensure_ascii=False))
 
